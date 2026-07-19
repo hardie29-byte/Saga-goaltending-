@@ -39,7 +39,7 @@ const CONTENT = {
               <li><strong>Coaching cues &amp; common mistakes</strong> — what to say mid-rep and what to watch for.</li>
               <li><strong>Module test</strong> — pass it (${QUIZ_PASS_PERCENT}%+) to complete the module.</li>
             </ul>
-            <p>A checkmark appears beside every lesson you finish. Your coach can see your progress on the Team Progress board — so do the work, not just the clicks.</p>` },
+            <p>A checkmark appears beside every lesson you finish, and the My Progress page shows exactly where you stand in every module — so do the work, not just the clicks.</p>` },
       ]
     },
 

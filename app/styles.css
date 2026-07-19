@@ -66,8 +66,6 @@ button { font: inherit; cursor: pointer; }
   font: inherit; width: 100%;
 }
 .login-card input[type="text"]:focus { outline: 2px solid var(--gold); border-color: transparent; }
-.role-row { display: flex; gap: 18px; justify-content: center; font-size: 14.5px; }
-.role-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
 
 /* ---------- avatar ---------- */
 .avatar {
@@ -252,26 +250,41 @@ button { font: inherit; cursor: pointer; }
 .quiz-result.pass { background: #e8f7ee; color: #14532d; border: 1px solid var(--green); }
 .quiz-result.fail { background: #fdecec; color: #7f1d1d; border: 1px solid var(--red); }
 
-/* ---------- team table ---------- */
+/* ---------- my progress page ---------- */
 .team-page h1 { font-size: 24px; margin-bottom: 6px; }
 .team-sub { color: var(--muted); margin-bottom: 20px; max-width: 640px; }
-.table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); }
-.team-table { border-collapse: collapse; width: 100%; min-width: 860px; font-size: 13.5px; }
-.team-table th, .team-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; }
-.team-table thead th {
-  background: #f3f4f7; font-size: 12px; text-transform: uppercase; letter-spacing: .6px;
-  color: var(--muted); position: sticky; top: 0;
+.progress-summary {
+  display: flex; align-items: center; gap: 18px;
+  background: var(--navy); color: #fff; border-radius: var(--radius);
+  padding: 20px 24px; margin-bottom: 22px;
 }
-.team-table .sticky-col { text-align: left; font-weight: 600; }
-.team-table td.sticky-col { display: flex; align-items: center; gap: 8px; border-bottom: none; }
-.team-table tbody tr { border-bottom: 1px solid var(--line); }
-.cell-frac { color: var(--muted); font-variant-numeric: tabular-nums; }
-.cell-done { background: #f2fbf5; }
-.cell-partial { background: #fdfaf0; }
-.cell-quiz { display: block; font-size: 11px; color: var(--muted); margin-top: 3px; }
+.progress-summary-num {
+  font-size: 40px; font-weight: 800; color: var(--gold);
+  font-variant-numeric: tabular-nums; line-height: 1;
+}
+.progress-summary-label { font-weight: 700; }
+.progress-summary-sub { font-size: 13px; color: #c3cadb; }
+.progress-list { display: flex; flex-direction: column; }
+.progress-row {
+  display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px 18px; margin-bottom: 8px;
+}
+.progress-row:hover { border-color: var(--gold); background: #fdfaf0; }
+.progress-info { flex: 1; min-width: 0; }
+.progress-title { display: block; font-weight: 650; font-size: 15.5px; margin-bottom: 6px; }
+.progress-bar-mini {
+  display: block; height: 6px; border-radius: 99px; background: #edeff3; overflow: hidden;
+}
+.progress-bar-mini > span {
+  display: block; height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, var(--gold), #e6c14a);
+}
+.progress-stats { text-align: right; flex-shrink: 0; }
+.progress-frac { display: block; font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cell-quiz { display: block; font-size: 11.5px; color: var(--muted); margin-top: 3px; }
 .cell-quiz.passed { color: var(--green); font-weight: 700; }
-.empty-note, .storage-note { color: var(--muted); font-size: 13.5px; margin-top: 16px; }
-.storage-note code { background: #eef1f5; padding: 1px 5px; border-radius: 4px; }
+.storage-note { color: var(--muted); font-size: 13.5px; margin-top: 16px; }
 
 /* ---------- responsive ---------- */
 @media (max-width: 640px) {

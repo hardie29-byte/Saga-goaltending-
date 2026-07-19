@@ -28,7 +28,7 @@ const store = {
 /* ---------- app state ---------- */
 const state = {
   currentUserId: store.read("bg_currentUser", null),
-  view: "dashboard",          // dashboard | lesson | team
+  view: "dashboard",          // dashboard | lesson
   openModules: {},            // moduleId -> bool
   activeLesson: null,         // { moduleId, lessonId }
   quizAttempt: null,          // { answers: [], submitted: false, score: null }
@@ -96,7 +96,7 @@ function render() {
   const app = document.getElementById("app");
   if (!currentUser()) { app.innerHTML = renderLogin(); return; }
   if (state.view === "lesson" && state.activeLesson) { app.innerHTML = renderLesson(); return; }
-  if (state.view === "team") { app.innerHTML = renderTeam(); return; }
+  if (state.view === "progress") { app.innerHTML = renderProgress(); return; }
   app.innerHTML = renderDashboard();
 }
 
@@ -119,7 +119,7 @@ function renderLogin() {
             <span class="avatar">${esc(u.name.slice(0, 1).toUpperCase())}</span>
             <span class="profile-info">
               <span class="profile-name">${esc(u.name)}</span>
-              <span class="profile-meta">${u.role === "coach" ? "Coach" : "Goalie"} · ${p.percent}% complete</span>
+              <span class="profile-meta">${p.percent}% complete · ${p.done}/${p.total} lessons</span>
             </span>
           </button>`;
         }).join("")}
@@ -129,10 +129,6 @@ function renderLogin() {
       <h2>Create a profile</h2>
       <form onsubmit="createUser(event)">
         <input type="text" id="new-name" placeholder="Your name" required maxlength="40">
-        <div class="role-row">
-          <label><input type="radio" name="role" value="goalie" checked> Goalie</label>
-          <label><input type="radio" name="role" value="coach"> Coach</label>
-        </div>
         <button type="submit" class="btn primary full">Start Training</button>
       </form>
     </div>
@@ -150,10 +146,9 @@ function createUser(e) {
   e.preventDefault();
   const name = document.getElementById("new-name").value.trim();
   if (!name) return;
-  const role = document.querySelector('input[name="role"]:checked').value;
   const users = store.getUsers();
   const id = "u" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  users.push({ id, name, role, createdAt: new Date().toISOString() });
+  users.push({ id, name, createdAt: new Date().toISOString() });
   store.saveUsers(users);
   selectUser(id);
 }
@@ -180,7 +175,7 @@ function renderHeader() {
       </div>
       <nav class="topbar-nav">
         <button class="nav-btn ${state.view === "dashboard" ? "active" : ""}" onclick="goDashboard()">My Training</button>
-        <button class="nav-btn ${state.view === "team" ? "active" : ""}" onclick="goTeam()">Team Progress</button>
+        <button class="nav-btn ${state.view === "progress" ? "active" : ""}" onclick="goProgress()">My Progress</button>
       </nav>
       <div class="topbar-right">
         <div class="user-chip">
@@ -198,7 +193,7 @@ function renderHeader() {
 }
 
 function goDashboard() { state.view = "dashboard"; state.activeLesson = null; render(); }
-function goTeam() { state.view = "team"; state.activeLesson = null; render(); }
+function goProgress() { state.view = "progress"; state.activeLesson = null; render(); }
 
 /* ---------- dashboard ---------- */
 function renderDashboard() {
@@ -220,7 +215,7 @@ function renderModuleRow(userId, mod) {
   const p = moduleProgress(userId, mod);
   const open = !!state.openModules[mod.id];
   return `
-  <section class="module ${open ? "open" : ""}">
+  <section class="module ${open ? "open" : ""}" id="mod-${mod.id}">
     <button class="module-head" onclick="toggleModule('${mod.id}')" aria-expanded="${open}">
       <span class="status-circle ${p.complete ? "done" : p.done > 0 ? "partial" : ""}">
         ${p.complete ? ICONS.check : ""}
@@ -407,71 +402,62 @@ function submitQuiz() {
   window.scrollTo(0, 0);
 }
 
-/* ---------- team progress board ---------- */
-function renderTeam() {
-  const users = store.getUsers().filter(u => u.role !== "coach");
-  const coachView = currentUser().role === "coach";
+/* ---------- personal progress page ---------- */
+function renderProgress() {
+  const user = currentUser();
+  const overall = programProgress(user.id);
+  const progress = store.getProgress(user.id);
 
-  const table = users.length ? `
-  <div class="table-scroll">
-    <table class="team-table">
-      <thead>
-        <tr>
-          <th class="sticky-col">Goalie</th>
-          ${CONTENT.modules.map(m => `<th title="${esc(m.title)}">${esc(shortTitle(m.title))}</th>`).join("")}
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${users.map(u => {
-          const overall = programProgress(u.id);
-          return `<tr>
-            <td class="sticky-col"><span class="avatar tiny">${esc(u.name.slice(0, 1).toUpperCase())}</span> ${esc(u.name)}</td>
-            ${CONTENT.modules.map(m => {
-              const p = moduleProgress(u.id, m);
-              const quiz = m.lessons.find(l => l.type === "quiz");
-              const quizScore = quiz ? store.getProgress(u.id).quizScores[quiz.id] : null;
-              const quizPassed = quiz ? isLessonComplete(u.id, quiz.id) : false;
-              return `<td class="cell ${p.complete ? "cell-done" : p.done > 0 ? "cell-partial" : ""}">
-                ${p.complete
-                  ? `<span class="status-circle done small">${ICONS.check}</span>`
-                  : `<span class="cell-frac">${p.done}/${p.total}</span>`}
-                ${quiz ? `<span class="cell-quiz ${quizPassed ? "passed" : ""}" title="Module test">${quizPassed ? "Test ✓" + (quizScore != null ? " " + quizScore + "%" : "") : quizScore != null ? "Test " + quizScore + "%" : "Test —"}</span>` : ""}
-              </td>`;
-            }).join("")}
-            <td class="cell"><strong>${overall.percent}%</strong></td>
-          </tr>`;
-        }).join("")}
-      </tbody>
-    </table>
-  </div>` : `<p class="empty-note">No goalie profiles yet. Goalies appear here as soon as they create a profile and start training.</p>`;
+  let currentBlock = -1;
+  const rows = CONTENT.modules.map(mod => {
+    let blockHeader = "";
+    if (mod.block !== currentBlock) {
+      currentBlock = mod.block;
+      blockHeader = `<div class="block-header">${esc(CONTENT.blocks[mod.block])}</div>`;
+    }
+    const p = moduleProgress(user.id, mod);
+    const percent = Math.round((p.done / p.total) * 100);
+    const quiz = mod.lessons.find(l => l.type === "quiz");
+    const quizScore = quiz ? progress.quizScores[quiz.id] : null;
+    const quizPassed = quiz ? isLessonComplete(user.id, quiz.id) : false;
+    return blockHeader + `
+    <button class="progress-row" onclick="jumpToModule('${mod.id}')">
+      <span class="status-circle ${p.complete ? "done" : p.done > 0 ? "partial" : ""}">${p.complete ? ICONS.check : ""}</span>
+      <span class="progress-info">
+        <span class="progress-title">${esc(mod.title)}</span>
+        <span class="progress-bar-mini"><span style="width:${percent}%"></span></span>
+      </span>
+      <span class="progress-stats">
+        <span class="progress-frac">${p.done}/${p.total} lessons</span>
+        ${quiz ? `<span class="cell-quiz ${quizPassed ? "passed" : ""}">${quizPassed ? "Test ✓ " + (quizScore != null ? quizScore + "%" : "") : quizScore != null ? "Test best: " + quizScore + "%" : "Test not taken"}</span>` : ""}
+      </span>
+    </button>`;
+  }).join("");
 
   return renderHeader() + `
   <main class="page">
     <div class="team-page">
-      <h1>Team Progress</h1>
-      <p class="team-sub">${coachView
-        ? "Every goalie in the program. A checkmark means the module is fully complete — all videos watched, lessons read, and the module test passed."
-        : "See how the whole group is progressing. Checkmarks = fully completed modules (videos watched + test passed)."}</p>
-      ${table}
-      <p class="storage-note">Progress is stored on this device/browser. To sync a whole team across devices, connect a backend — see the note at the top of <code>app.js</code>.</p>
+      <h1>My Progress</h1>
+      <p class="team-sub">Your personal progress checker, ${esc(user.name)}. A green checkmark means the module is fully complete — every video watched, every lesson read, and the module test passed. Tap any module to jump back into it.</p>
+      <div class="progress-summary">
+        <div class="progress-summary-num">${overall.percent}%</div>
+        <div>
+          <div class="progress-summary-label">Program complete</div>
+          <div class="progress-summary-sub">${overall.done} of ${overall.total} lessons finished</div>
+        </div>
+      </div>
+      <div class="progress-list">${rows}</div>
+      <p class="storage-note">Your progress is saved automatically on this device.</p>
     </div>
   </main>`;
 }
 
-function shortTitle(t) {
-  const map = {
-    "Welcome to Builder Gold": "Welcome",
-    "Stance & Ready Position": "Stance",
-    "Crease Movement & Skating": "Movement",
-    "Angles & Depth Management": "Angles",
-    "Rebound Control": "Rebounds",
-    "Reading the Release": "Reads",
-    "Puck Tracking": "Tracking",
-    "Post Play": "Post Play",
-    "Puck Handling": "Handling",
-  };
-  return map[t] || t;
+function jumpToModule(moduleId) {
+  state.view = "dashboard";
+  state.openModules[moduleId] = true;
+  render();
+  const el = document.getElementById("mod-" + moduleId);
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 /* ---------- boot ---------- */
