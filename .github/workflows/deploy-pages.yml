@@ -1,9 +1,15 @@
-name: Deploy app to GitHub Pages
+name: Publish app to GitHub Pages
+
+# The site serves from the gh-pages branch:
+# https://hardie29-byte.github.io/Saga-goaltending-/
+# This workflow mirrors the app/ folder to that branch.
 
 on:
   push:
     branches:
       - main
+    paths:
+      - "app/**"
   workflow_dispatch:
     inputs:
       branch:
@@ -12,29 +18,26 @@ on:
         default: "main"
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  publish:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.branch || github.ref_name }}
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: app
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Push app/ to gh-pages
+        run: |
+          cd app
+          touch .nojekyll
+          git init -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Publish app to GitHub Pages"
+          git push --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" gh-pages
