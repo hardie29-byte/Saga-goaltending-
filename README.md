@@ -4,7 +4,11 @@ The **Builder Gold Goalie Development Program** — an interactive training app 
 
 ## The interactive app (`app/`)
 
-A full working training app — no build step, no dependencies. Open `app/index.html` in a browser (or host the `app/` folder anywhere, e.g. GitHub Pages or Netlify).
+**Live at: https://hardie29-byte.github.io/Saga-goaltending-/**
+
+A full working training app — no build step, no dependencies. It's hosted free on GitHub Pages (served from the `gh-pages` branch); it also runs by simply opening `app/index.html` in a browser.
+
+**To update the live site:** push app changes to `main` (the workflow republishes automatically), or run the "Publish app to GitHub Pages" workflow from the Actions tab, or push the `app/` files to the `gh-pages` branch directly.
 
 **Features:**
 - **Profiles** — each goalie creates a profile on the login screen; multiple profiles can share a device
